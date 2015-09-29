@@ -97,7 +97,7 @@ template <> Item* type<Item>::usr_constructor(lua_State *L)
 
 // Forbid to set unknown values.
 // stack: obj key val mt
-template <> bool type<Item>::usr_newindex(lua_State *L)
+template <> bool type<Item>::usr_setter(lua_State *L)
 {
     const char *key = lua_tostring(L, 2);
     luaL_error(L, "Error setting value to [%s]", key);

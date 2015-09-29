@@ -78,14 +78,21 @@ static bool usr_index_called = false;
 static bool usr_newindex_called = false;
 static bool usr_gc_called = false;
 
+
 namespace luax {
-template <> const char* type<Point>::usr_name() { return "Point"; }
 template <> void type<Point>::usr_instance_mt(lua_State*) { usr_instance_mt_called = true; }
 template <> void type<Point>::usr_type_mt(lua_State*) { usr_type_mt_called = true;}
-template <> bool type<Point>::usr_index(lua_State*) { usr_index_called = true; return false; }
-template <> bool type<Point>::usr_newindex(lua_State*) { usr_newindex_called = true; return false; }
+template <> bool type<Point>::usr_getter(lua_State*) { usr_index_called = true; return false; }
+template <> bool type<Point>::usr_setter(lua_State*) { usr_newindex_called = true; return false; }
 template <> bool type<Point>::usr_gc(lua_State*, Point*) { usr_gc_called = true; return false; }
 }
+
+LUAX_TYPE_NAME(Point, "Point")
+// Instad of macro you can use:
+//
+//  namespace luax {
+//      template <> const char* type<Point>::usr_name() { return "Point"; }
+//  }
 
 TEST_F(LuaxTest, simple)
 {
@@ -143,21 +150,34 @@ TEST_F(LuaxTest, gc)
 //------------------------------------------------------------------------------
 
 // Test: methods.
-namespace luax {
-template <> luaL_Reg type<Point>::functions[] = {
-    {"getx", pt_x},
-    {"gety", pt_y},
-    {"sety", pt_y},
-    {0, 0}
-};
+LUAX_FUNCTIONS_BEGIN(Point)
+    LUAX_FUNCTION("getx", pt_x)
+    LUAX_FUNCTION("gety", pt_y)
+    LUAX_FUNCTION("sety", pt_y)
+LUAX_FUNCTIONS_END
 
-template <> Method<Point> type<Point>::methods[] =
-{
-    {"getX", &Point::getX},
-    {"setX", &Point::setX},
-    {0, 0}
-};
-}
+LUAX_FUNCTIONS_M_BEGIN(Point)
+    LUAX_FUNCTION("getX", &Point::getX)
+    LUAX_FUNCTION("setX", &Point::setX)
+LUAX_FUNCTIONS_END
+
+// Or direct specs:
+//
+//namespace luax {
+//template <> luaL_Reg type<Point>::functions[] = {
+//    {"getx", pt_x},
+//    {"gety", pt_y},
+//    {"sety", pt_y},
+//    {0, 0}
+//};
+//
+//template <> Method<Point> type<Point>::methods[] =
+//{
+//    {"getX", &Point::getX},
+//    {"setX", &Point::setX},
+//    {0, 0}
+//};
+//}
 
 TEST_F(LuaxTest, methods)
 {
@@ -195,6 +215,7 @@ template <> Point* type<Point>::usr_constructor(lua_State *L)
     return 0;
 }
 }
+
 TEST_F(LuaxTest, construct)
 {
     luax::init(L);
@@ -234,16 +255,25 @@ struct PointExt: public Point
     }
 };
 
-namespace luax {
-template<> const char* type<PointExt>::usr_name() { return "PointExt"; }
-template<> const char* type<PointExt>::usr_super_name() { return "Point"; }
-template <> Method<PointExt> type<PointExt>::methods[] =
-{
-    {"getZ", &PointExt::getsetZ},
-    {"setZ", &PointExt::getsetZ},
-    {0, 0}
-};
-}
+LUAX_TYPE_NAME(PointExt, "PointExt")
+LUAX_TYPE_SUPER_NAME(PointExt, "Point")
+LUAX_FUNCTIONS_M_BEGIN(PointExt)
+    LUAX_FUNCTION("getZ", &PointExt::getsetZ)
+    LUAX_FUNCTION("setZ", &PointExt::getsetZ)
+LUAX_FUNCTIONS_END
+
+// Or:
+//
+//namespace luax {
+//template<> const char* type<PointExt>::usr_name() { return "PointExt"; }
+//template<> const char* type<PointExt>::usr_super_name() { return "Point"; }
+//template <> Method<PointExt> type<PointExt>::methods[] =
+//{
+//    {"getZ", &PointExt::getsetZ},
+//    {"setZ", &PointExt::getsetZ},
+//    {0, 0}
+//};
+//}
 
 TEST_F(LuaxTest, inherit)
 {
@@ -264,19 +294,29 @@ TEST_F(LuaxTest, inherit)
 }
 //------------------------------------------------------------------------------
 
-// Test: property
-namespace luax {
-template <> FuncProperty type<Point>::func_properties[] = {
-    {"x", pt_x, pt_x},
-    {"y", pt_y, pt_y},
-    {0, 0, 0}
-};
-template <> MethodProperty<Point> type<Point>::method_properties[] = {
-    {"X", &Point::getX, &Point::setX},
-    {0, 0, 0}
-};
-}
+LUAX_PROPERTIES_BEGIN(Point)
+    LUAX_PROPERTY("x", pt_x, pt_x)
+    LUAX_PROPERTY("y", pt_y, pt_y)
+LUAX_PROPERTIES_END
 
+LUAX_PROPERTIES_M_BEGIN(Point)
+    LUAX_PROPERTY("X", &Point::getX, &Point::setX)
+LUAX_PROPERTIES_END
+
+// Or:
+//namespace luax {
+//template <> FuncProperty type<Point>::func_properties[] = {
+//    {"x", pt_x, pt_x},
+//    {"y", pt_y, pt_y},
+//    {0, 0, 0}
+//};
+//template <> MethodProperty<Point> type<Point>::method_properties[] = {
+//    {"X", &Point::getX, &Point::setX},
+//    {0, 0, 0}
+//};
+//}
+
+// Test: property
 TEST_F(LuaxTest, prop)
 {
     usr_index_called = false;
@@ -313,14 +353,19 @@ TEST_F(LuaxTest, prop)
 }
 //------------------------------------------------------------------------------
 
-// Test: properties inheritance.
-namespace luax {
-template <> MethodProperty<PointExt> type<PointExt>::method_properties[] = {
-    {"Z", &PointExt::getsetZ, &PointExt::getsetZ},
-    {0, 0, 0}
-};
-}
+LUAX_PROPERTIES_M_BEGIN(PointExt)
+    LUAX_PROPERTY("Z", &PointExt::getsetZ, &PointExt::getsetZ)
+LUAX_PROPERTIES_END
 
+// Or:
+//namespace luax {
+//template <> MethodProperty<PointExt> type<PointExt>::method_properties[] = {
+//    {"Z", &PointExt::getsetZ, &PointExt::getsetZ},
+//    {0, 0, 0}
+//};
+//}
+
+// Test: properties inheritance.
 TEST_F(LuaxTest, propInherit)
 {
     luax::init(L);
@@ -343,15 +388,21 @@ TEST_F(LuaxTest, propInherit)
 }
 //------------------------------------------------------------------------------
 
-// Test: type enums.
-namespace luax {
-template <> Enum type<Point>::type_enums[] = {
-    {"ENUM1", 10},
-    {"ENUM2", 20},
-    {0, 0}
-};
-}
+LUAX_TYPE_ENUMS_BEGIN(Point)
+    LUAX_ENUM("ENUM1", 10)
+    LUAX_ENUM("ENUM2", 20)
+LUAX_TYPE_ENUMS_END
 
+// Or:
+//namespace luax {
+//template <> Enum type<Point>::type_enums[] = {
+//    {"ENUM1", 10},
+//    {"ENUM2", 20},
+//    {0, 0}
+//};
+//}
+
+// Test: type enums.
 TEST_F(LuaxTest, typeEnums)
 {
     luax::init(L);
@@ -361,7 +412,6 @@ TEST_F(LuaxTest, typeEnums)
 }
 //------------------------------------------------------------------------------
 
-// Test: type functions.
 
 static int func1(lua_State *L)
 {
@@ -375,15 +425,20 @@ static int func2(lua_State *L)
     return 1;
 }
 
+LUAX_TYPE_FUNCTIONS_BEGIN(Point)
+    LUAX_FUNCTION("func1", func1)
+    LUAX_FUNCTION("func2", func2)
+LUAX_TYPE_FUNCTIONS_END
+// Or:
+//namespace luax {
+//template <> luaL_Reg type<Point>::type_functions[] = {
+//    {"func1", func1},
+//    {"func2", func2},
+//    {0, 0}
+//};
+//}
 
-namespace luax {
-template <> luaL_Reg type<Point>::type_functions[] = {
-    {"func1", func1},
-    {"func2", func2},
-    {0, 0}
-};
-}
-
+// Test: type functions.
 TEST_F(LuaxTest, typeFunc)
 {
     luax::init(L);

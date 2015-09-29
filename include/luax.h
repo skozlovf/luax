@@ -43,9 +43,79 @@ extern "C" {
 #define luax_setregfield(L,name) lua_setfield(L, LUA_REGISTRYINDEX, name)
 
 
-#define LUAX_UDATA_TABLE "_lxu"
-#define LUAX_REGISTRY_INDEX "__luax_idx"
-#define LUAX_REGISTRY_NEWINDEX "__luax_newidx"
+// Helper macros to define a type.
+// TODO: add docs for the macros.
+
+#define LUAX_TYPE_NAME(cls,name)                                        \
+    namespace luax {                                                    \
+        template <> const char* type<cls>::usr_name() { return name; }  \
+    }
+
+#define LUAX_TYPE_SUPER_NAME(cls,name)                                      \
+    namespace luax {                                                        \
+        template <> const char* type<cls>::usr_super_name() { return name; }\
+    }
+
+
+#define LUAX_FUNCTIONS_BEGIN(cls)           \
+    namespace luax {                        \
+        template <> luaL_Reg type<cls>::functions[] = {
+
+#define LUAX_FUNCTIONS_M_BEGIN(cls)         \
+    namespace luax {                        \
+        template <> Method<cls> type<cls>::methods[] = {
+
+#define LUAX_FUNCTIONS_END                  \
+            {0, 0}                          \
+        };                                  \
+    } // namespace luax
+
+#define LUAX_FUNCTION(name, f) {name, f},
+
+
+#define LUAX_PROPERTIES_BEGIN(cls)          \
+    namespace luax {                        \
+        template <>                         \
+        FuncProperty type<cls>::func_properties[] = {
+
+#define LUAX_PROPERTIES_M_BEGIN(cls)        \
+    namespace luax {                        \
+        template <>                         \
+        MethodProperty<cls> type<cls>::method_properties[] = {
+
+#define LUAX_PROPERTIES_END                 \
+            {0, 0, 0}                       \
+        };                                  \
+    } // namespace luax
+
+#define LUAX_PROPERTY(name,getter,setter) {name, getter, setter},
+
+
+#define LUAX_TYPE_ENUMS_BEGIN(cls)          \
+    namespace luax {                        \
+        template <> Enum type<cls>::type_enums[] = {
+
+#define LUAX_TYPE_ENUMS_END                 \
+            {0, 0}                          \
+        };                                  \
+    } // namespace luax
+
+#define LUAX_ENUM(name,val) {name, val},
+
+
+#define LUAX_TYPE_FUNCTIONS_BEGIN(cls)      \
+    namespace luax {                        \
+        template <> luaL_Reg type<cls>::type_functions[] = {
+
+#define LUAX_TYPE_FUNCTIONS_END             \
+            {0, 0}                          \
+        };                                  \
+    } // namespace luax
+
+
+#define LUAX_UDATA_TABLE        "__luax_ud"
+#define LUAX_REGISTRY_INDEX     "__luax_idx"
+#define LUAX_REGISTRY_NEWINDEX  "__luax_newidx"
 
 namespace luax
 {
