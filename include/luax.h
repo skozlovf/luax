@@ -135,11 +135,10 @@ public:
     static const char* usr_super_name();
     static void usr_instance_mt(lua_State *L);
     static void usr_type_mt(lua_State *L);
-    static bool usr_index(lua_State *L);
-    static bool usr_newindex(lua_State *L);
+    static bool usr_getter(lua_State *L);
+    static bool usr_setter(lua_State *L);
     static bool usr_gc(lua_State *L, T *obj);
     static T* usr_constructor(lua_State *L);
-    static void usr_register_instance(lua_State *L);
 
     static luaL_Reg functions[];
     static Method<T> methods[];
@@ -175,11 +174,10 @@ private:
 template <typename T> const char* type<T>::usr_super_name() { return 0; }
 template <typename T> void type<T>::usr_instance_mt(lua_State*) { }
 template <typename T> void type<T>::usr_type_mt(lua_State*) { }
-template <typename T> bool type<T>::usr_index(lua_State*) { return false; }
-template <typename T> bool type<T>::usr_newindex(lua_State*) { return false; }
+template <typename T> bool type<T>::usr_getter(lua_State*) { return false; }
+template <typename T> bool type<T>::usr_setter(lua_State*) { return false; }
 template <typename T> bool type<T>::usr_gc(lua_State*, T*) { return false; }
 template <typename T> T* type<T>::usr_constructor(lua_State*) { return 0; }
-template <typename T> void type<T>::usr_register_instance(lua_State*) { }
 
 template <typename T> luaL_Reg type<T>::functions[] = {0, 0};
 template <typename T> Method<T> type<T>::methods[] = {0, 0};
@@ -232,7 +230,7 @@ template <typename T> int type<T>::index(lua_State *L)
 
         // Call user defined hook, if it returns false then
         // do default action - search directly in the metatable.
-        if (!usr_index(L))
+        if (!usr_getter(L))
         {
             // Store userdata in the registry for later use.
             // We do it becuase next lua_gettable() may trigger
@@ -318,7 +316,7 @@ template <typename T> int type<T>::newindex(lua_State *L)
 
         // Call user defined hook, if it returns false then
         // do default action - search directly in the metatable.
-        if (!usr_newindex(L))
+        if (!usr_setter(L))
         {
             // See index() comments about same action.
             if (lua_isuserdata(L, 1))
