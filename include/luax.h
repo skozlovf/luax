@@ -229,7 +229,7 @@ private:
     static inline int index(lua_State *L);
     static inline int newindex(lua_State *L);
 
-    static void register_attrs(lua_State *L);
+    static void register_attrs(lua_State *L, bool customIndex);
     static inline int on_method(lua_State *L);
     static inline int on_getter(lua_State *L);
     static inline int on_setter(lua_State *L);
@@ -442,7 +442,8 @@ template <typename T> int type<T>::newindex(lua_State *L)
 }
 //------------------------------------------------------------------------------
 
-template <typename T> void type<T>::register_attrs(lua_State *L)
+template <typename T> void type<T>::register_attrs(lua_State *L,
+                                                   bool customIndex)
 {
     for (luaL_reg *m = functions; m->name; ++m)
     {
@@ -457,7 +458,7 @@ template <typename T> void type<T>::register_attrs(lua_State *L)
         lua_setfield(L, -2, m->name);
     }
 
-    if (func_properties[0].name || method_properties[0].name)
+    if (customIndex)
     {
         lua_newtable(L);        // mt getters
         lua_newtable(L);        // mt getters setters
@@ -564,7 +565,23 @@ template <typename T> void type<T>::register_in(lua_State *L)
         return;
     }
 
-    if (func_properties[0].name || method_properties[0].name)
+    bool custom_index = false;
+
+    // If super class is set then check it's metatable for properties.
+    // If it has props then we have to control __index and __newindex.
+    if (usr_super_name())
+    {
+        luaL_getmetatable(L, usr_super_name());
+        lua_pushstring(L, "__getters");
+        lua_rawget(L, -2);
+        custom_index = !lua_isnil(L, -1);
+        lua_pop(L, 2);
+    }
+    else
+        custom_index = func_properties[0].name || method_properties[0].name;
+
+
+    if (custom_index)
     {
         lua_pushcfunction(L, index);
         lua_setfield(L, -2, "__index");
@@ -589,7 +606,7 @@ template <typename T> void type<T>::register_in(lua_State *L)
     // Cleanup stack from usr_instance_mt() garbage if present.
     lua_settop(L, top);
 
-    register_attrs(L);
+    register_attrs(L, custom_index);
 
     if (usr_super_name())
     {
