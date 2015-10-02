@@ -82,8 +82,8 @@ static bool usr_gc_called = false;
 namespace luax {
 template <> void type<Point>::usr_instance_mt(lua_State*) { usr_instance_mt_called = true; }
 template <> void type<Point>::usr_type_mt(lua_State*) { usr_type_mt_called = true;}
-template <> bool type<Point>::usr_getter(lua_State*) { usr_index_called = true; return false; }
-template <> bool type<Point>::usr_setter(lua_State*) { usr_newindex_called = true; return false; }
+template <> void type<Point>::usr_getter(lua_State*) { usr_index_called = true; }
+template <> void type<Point>::usr_setter(lua_State*) { usr_newindex_called = true; }
 template <> bool type<Point>::usr_gc(lua_State*, Point*) { usr_gc_called = true; return false; }
 }
 
@@ -337,8 +337,10 @@ TEST_F(LuaxTest, prop)
     EXPECT_SCRIPT("assert(p.fake == nil)");
     EXPECT_TRUE(usr_index_called);
 
+    EXPECT_SCRIPT("assert(p:getx() == 10)");
     EXPECT_SCRIPT("assert(p.y == 20)");
     EXPECT_SCRIPT("assert(p.X == 10)");
+
     EXPECT_SCRIPT("p.x = 11");
     // See comments about usr_index().
     EXPECT_FALSE(usr_newindex_called);
@@ -387,6 +389,96 @@ TEST_F(LuaxTest, propInherit)
     EXPECT_SCRIPT("assert(p.X == 33)");
 }
 //------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+
+
+struct PointExt2: public PointExt
+{
+    PointExt2(int x = 0, int y = 0): PointExt(x, y) {}
+
+    int set_foo_x(lua_State *L)
+    {
+        x = static_cast<int>(luaL_checkinteger(L, 1));
+        return 0;
+    }
+};
+
+LUAX_TYPE_NAME(PointExt2, "PointExt2")
+LUAX_TYPE_SUPER_NAME(PointExt2, "PointExt")
+LUAX_FUNCTIONS_M_BEGIN(PointExt2)
+    LUAX_FUNCTION("set_foo_x", &PointExt2::set_foo_x)
+LUAX_FUNCTIONS_END
+
+static bool getter_called = false;
+static bool setter_called = false;
+
+namespace luax {
+// For non existent propes we return fixed value.
+template <> void type<PointExt2>::usr_getter(lua_State *L)
+{
+    lua_pushinteger(L, 42);
+    getter_called = true;
+}
+template <> void type<PointExt2>::usr_setter(lua_State *L)
+{
+    setter_called = true;
+}
+} // namespace luax
+
+// Test: properties and function access if usr_getter() is defined.
+TEST_F(LuaxTest, propWithUserIndex)
+{
+    getter_called = false;
+    setter_called = false;
+
+    luax::init(L);
+    luax::type<Point>::register_in(L);
+    luax::type<PointExt>::register_in(L);
+    luax::type<PointExt2>::register_in(L);
+
+    PointExt2 pt(10, 20);
+    pt.z = 30;
+
+    luax::type<PointExt2>::push(L, &pt, false);
+    lua_setglobal(L, "p");
+
+    // Since parent has X then usr_getter() will not be called.
+    EXPECT_SCRIPT("assert(p.x == 10)");
+    EXPECT_FALSE(getter_called);
+    EXPECT_SCRIPT("assert(p.y == 20)");
+    EXPECT_FALSE(getter_called);
+    EXPECT_SCRIPT("assert(p.Z == 30)");
+    EXPECT_FALSE(getter_called);
+
+    // And here we call user hook, since fakeprop is not registered
+    // in any parent.
+    EXPECT_SCRIPT("assert(p.fakeprop == 42)");
+    EXPECT_TRUE(getter_called);
+
+    // Now test setter.
+    EXPECT_SCRIPT("p.x = 11");
+    EXPECT_FALSE(setter_called);
+    EXPECT_SCRIPT("p.Z = 12");
+    EXPECT_FALSE(setter_called);
+
+    EXPECT_SCRIPT("p.fakeprop = 12");
+    EXPECT_TRUE(setter_called);
+
+    // Now test how function call works.
+    getter_called = false;
+    setter_called = false;
+
+    EXPECT_SCRIPT("assert(p:getx() == 11)");
+    EXPECT_FALSE(getter_called);
+
+    EXPECT_SCRIPT("p:set_foo_x(32)");
+    EXPECT_FALSE(getter_called);
+    EXPECT_SCRIPT("assert(p:getx() == 32)");
+
+}
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+
 
 LUAX_TYPE_ENUMS_BEGIN(Point)
     LUAX_ENUM("ENUM1", 10)
