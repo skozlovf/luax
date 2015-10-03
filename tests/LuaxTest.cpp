@@ -82,8 +82,8 @@ static bool usr_gc_called = false;
 namespace luax {
 template <> void type<Point>::usr_instance_mt(lua_State*) { usr_instance_mt_called = true; }
 template <> void type<Point>::usr_type_mt(lua_State*) { usr_type_mt_called = true;}
-template <> void type<Point>::usr_getter(lua_State*) { usr_index_called = true; }
-template <> void type<Point>::usr_setter(lua_State*) { usr_newindex_called = true; }
+template <> int type<Point>::usr_getter(lua_State*) { usr_index_called = true; return 0; }
+template <> int type<Point>::usr_setter(lua_State*) { usr_newindex_called = true; return 0; }
 template <> bool type<Point>::usr_gc(lua_State*, Point*) { usr_gc_called = true; return false; }
 }
 
@@ -414,14 +414,16 @@ static bool setter_called = false;
 
 namespace luax {
 // For non existent propes we return fixed value.
-template <> void type<PointExt2>::usr_getter(lua_State *L)
+template <> int type<PointExt2>::usr_getter(lua_State *L)
 {
     lua_pushinteger(L, 42);
     getter_called = true;
+    return 1;
 }
-template <> void type<PointExt2>::usr_setter(lua_State *L)
+template <> int type<PointExt2>::usr_setter(lua_State *L)
 {
     setter_called = true;
+    return 0;
 }
 } // namespace luax
 
@@ -477,8 +479,49 @@ TEST_F(LuaxTest, propWithUserIndex)
 
 }
 //------------------------------------------------------------------------------
+
+TEST_F(LuaxTest, propWithUserIndexBenchGet)
+{
+    getter_called = false;
+    setter_called = false;
+
+    luax::init(L);
+    luax::type<Point>::register_in(L);
+    luax::type<PointExt>::register_in(L);
+    luax::type<PointExt2>::register_in(L);
+
+    PointExt2 pt(10, 20);
+    pt.z = 30;
+
+    luax::type<PointExt2>::push(L, &pt, false);
+    lua_setglobal(L, "p");
+
+    EXPECT_SCRIPT("assert(p.x == 10)");
+    EXPECT_SCRIPT("for i=1,1000000 do s=p.fakeprop end");
+}
 //------------------------------------------------------------------------------
 
+TEST_F(LuaxTest, propWithUserIndexBenchSet)
+{
+    getter_called = false;
+    setter_called = false;
+
+    luax::init(L);
+    luax::type<Point>::register_in(L);
+    luax::type<PointExt>::register_in(L);
+    luax::type<PointExt2>::register_in(L);
+
+    PointExt2 pt(10, 20);
+    pt.z = 30;
+
+    luax::type<PointExt2>::push(L, &pt, false);
+    lua_setglobal(L, "p");
+
+    EXPECT_SCRIPT("assert(p.x == 10)");
+    EXPECT_SCRIPT("for i=1,1000000 do p.x=i end");
+}
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 LUAX_TYPE_ENUMS_BEGIN(Point)
     LUAX_ENUM("ENUM1", 10)

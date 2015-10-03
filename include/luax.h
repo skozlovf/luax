@@ -206,8 +206,8 @@ public:
     static const char* usr_super_name();
     static void usr_instance_mt(lua_State *L);
     static void usr_type_mt(lua_State *L);
-    static void usr_getter(lua_State *L);
-    static void usr_setter(lua_State *L);
+    static int usr_getter(lua_State *L);
+    static int usr_setter(lua_State *L);
     static bool usr_gc(lua_State *L, T *obj);
     static T* usr_constructor(lua_State *L);
 
@@ -245,8 +245,8 @@ private:
 template <typename T> const char* type<T>::usr_super_name() { return 0; }
 template <typename T> void type<T>::usr_instance_mt(lua_State*) { }
 template <typename T> void type<T>::usr_type_mt(lua_State*) { }
-template <typename T> void type<T>::usr_getter(lua_State*) { }
-template <typename T> void type<T>::usr_setter(lua_State*) { }
+template <typename T> int type<T>::usr_getter(lua_State*) { return 0; }
+template <typename T> int type<T>::usr_setter(lua_State*) { return 0; }
 template <typename T> bool type<T>::usr_gc(lua_State*, T*) { return false; }
 template <typename T> T* type<T>::usr_constructor(lua_State*) { return 0; }
 
@@ -288,83 +288,50 @@ template <typename T> int type<T>::index(lua_State *L)
 {
     // Initial stack: obj key
 
-    lua_getmetatable(L, 1);         // obj key mt
-    lua_pushstring(L, "__getters"); // obj key mt '__getters'
-    lua_rawget(L, -2);              // obj key mt getters
-    lua_pushvalue(L, 2);            // obj key mt getters key
-    lua_rawget(L, -2);              // obj key mt getters getters[key]
+    if (!lua_getmetatable(L, 1))         // obj key mt
+        return usr_getter(L);
 
-    // If no getter is found.
-    if (lua_isnil(L, -1))
+    while (1)
     {
-        lua_pop(L, 2);              // obj key mt
-
-        // Store userdata in the registry for later use.
-        // We do it becuase next lua_gettable() may trigger
-        // parent metatable's __index and userdata value will be lost
-        // for the function's self parameter.
-        // See below.
-        if (lua_isuserdata(L, 1))
-        {
-            lua_pushvalue(L, 1);
-            luax_setregfield(L, LUAX_REGISTRY_INDEX);
-        }
-
-        // Let's check our metatables.
-        lua_pushvalue(L, 2);        // obj key mt key
-
-        // We use gettable instead of rawget to support metatable
-        // inheritance if metatable has parent metatable.
-        // The call looks like:
-        //      ud.mt.parent_mt.__index[func](mt)
-        // Normal call looks like:
-        //      ud.mt.__index[func](ud)
-        // As you see parent mt uses preceding mt instad of userdata.
-        // So we'll use previously stored LUAX_REGISTRY_INDEX for the call.
-        // See below.
-        lua_gettable(L, -2);        // obj key mt mt[key]
-
-        // We definetely has no such key,
-        // so call user function as last resort.
+        // No metatable, return nil
         if (lua_isnil(L, -1))
-            usr_getter(L);
-    }
-
-    // If getter is a function then call it.
-    else if (lua_type(L, -1) == LUA_TFUNCTION)
-    {
-        // If self is not an userdata then this function is inherited from the
-        // super class. We have to use LUAX_REGISTRY_INDEX instead of current
-        // object (which is preceding metatable).
-        if (!lua_isuserdata(L, 1))
         {
-            luax_getregfield(L, LUAX_REGISTRY_INDEX);
-            // If no ud value stored then put back old value.
-            if (lua_isnil(L, -1))           // obj key mt getters func ud
-            {
-                lua_pop(L, 1);              // obj key mt getters func
-                lua_pushvalue(L, 1);        // obj key mt getters func ud
-            }
-            // Erase ud from the registry since we don't need it anymore.
-            else
-            {
-                lua_pushnil(L);
-                luax_setregfield(L, LUAX_REGISTRY_INDEX);
-            }
+            lua_pop(L, 1);              // obj key
+            return usr_getter(L);
         }
 
-        // If self is an userdata then use it.
-        else
+        lua_pushstring(L, "__getters"); // obj key mt '__getters'
+        lua_rawget(L, -2);              // obj key mt getters
+        if (lua_isnil(L, -1))
+            continue;
+        lua_pushvalue(L, 2);            // obj key mt getters key
+        lua_rawget(L, -2);              // obj key mt getters getters[key]
+
+        // If no getter is found in the current mt.
+        if (lua_isnil(L, -1))
+        {
+            lua_pop(L, 2);              // obj key mt
+            lua_pushvalue(L, 2);        // obj key mt key
+            lua_rawget(L, -2);          // obj key mt mt[key]
+
+            // No attr found in the current metatable.
+            if (lua_isnil(L, -1))
+            {
+                lua_pop(L, 1);              // obj key mt
+                if (!lua_getmetatable(L, -1))    // obj key mt mt_mt
+                    lua_pushnil(L);
+                lua_remove(L, -2);          // obj key mt_mt
+                continue;
+            }
+            break;
+        }
+        // If getter is found then call it.
+        else if (lua_type(L, -1) == LUA_TFUNCTION)
+        {
             lua_pushvalue(L, 1);        // obj key mt getters func obj
-
-        lua_call(L, 1, 1);          // obj key mt getters result
-    }
-
-    // Erase ud from the registry.
-    else if (!lua_isuserdata(L, 1))
-    {
-        lua_pushnil(L);
-        luax_setregfield(L, LUAX_REGISTRY_INDEX);
+            lua_call(L, 1, 1);          // obj key mt getters result
+            break;
+        }
     }
 
     return 1;
@@ -375,84 +342,42 @@ template <typename T> int type<T>::newindex(lua_State *L)
 {
     // Initial stack: obj key val
 
-    lua_getmetatable(L, 1);         // obj key val mt
-    lua_pushstring(L, "__setters"); // obj key val mt '__setters'
-    lua_rawget(L, -2);              // obj key val mt setters
-    lua_pushvalue(L, 2);            // obj key val mt setters key
-    lua_rawget(L, -2);              // obj key val mt setters setters[key]
+    if (!lua_getmetatable(L, 1))         // obj key val mt
+        return usr_setter(L);
 
-    // If no setter is found.
-    if (lua_isnil(L, -1))
+    while (1)
     {
-        lua_pop(L, 2);              // obj key val mt
-
-        // See index() comments about same action.
-        if (lua_isuserdata(L, 1))
-        {
-            lua_pushvalue(L, 1);
-            luax_setregfield(L, LUAX_REGISTRY_NEWINDEX);
-
-            // Reset 'newindex hook found' flag.
-            lua_pushnil(L);
-            luax_setregfield(L, LUAX_REGISTRY_NEWINDEX_OK);
-        }
-
-        lua_pushvalue(L, 2);    // obj key val mt key
-        lua_pushvalue(L, 3);    // obj key val mt key val
-        // we use settable instead of rawset to support metatable
-        // inheritance if metatable has parent metatable.
-        lua_settable(L, -3);    // obj key val mt
-
-        // If 'newindex hook found' flag is not set then no setter is found
-        // and we call user hook.
-        luax_getregfield(L, LUAX_REGISTRY_NEWINDEX_OK);
         if (lua_isnil(L, -1))
         {
-            lua_pop(L, 1);
-            usr_setter(L);
+            lua_pop(L, 1);              // obj key val
+            return usr_setter(L);
         }
-        else
-            lua_pop(L, 1);
-    }
 
-    // If setter is a function then call it.
-    // stack: obj key val mt setters func
-    else if (lua_type(L, -1) == LUA_TFUNCTION)
-    {
-        // Set flag to notify caller what newindex hook is found.
-        lua_pushboolean(L, 1);              // obj key val mt setters func 1
-        luax_setregfield(L, LUAX_REGISTRY_NEWINDEX_OK);
+        lua_pushstring(L, "__setters"); // obj key val mt '__setters'
+        lua_rawget(L, -2);              // obj key val mt setters
+        if (lua_isnil(L, -1))
+            continue;
+        lua_pushvalue(L, 2);            // obj key val mt setters key
+        lua_rawget(L, -2);              // obj key val mt setters setters[key]
 
-        // stack: obj key val mt setters func
-        // See index() comments about same action.
-        if (!lua_isuserdata(L, 1))
+        // If no setter is found in the current mt;
+        // Try super metatable.
+        if (lua_isnil(L, -1))
         {
-            luax_getregfield(L, LUAX_REGISTRY_NEWINDEX);
-            if (lua_isnil(L, -1))           // obj key mt getters func ud
-            {
-                lua_pop(L, 1);              // obj key mt getters func
-                lua_pushvalue(L, 1);        // obj key mt getters func ud
-            }
-            else
-            {
+            lua_pop(L, 2);              // obj key val mt
+            if (!lua_getmetatable(L, -1))    // obj key val mt mt_mt
                 lua_pushnil(L);
-                luax_setregfield(L, LUAX_REGISTRY_NEWINDEX);
-            }
+            lua_remove(L, -2);          // obj key val mt_mt
+            continue;
         }
-
-        // If self is an userdata then use it.
-        else
+        // If setter is found then call it.
+        else if (lua_type(L, -1) == LUA_TFUNCTION)
+        {
             lua_pushvalue(L, 1);        // obj key val mt setters func obj
-
-        lua_pushvalue(L, 3);        // obj key val mt setters func obj val
-        lua_call(L, 2, 0);          // obj key mt getters result
-    }
-
-    // Erase ud from the registry.
-    else if (!lua_isuserdata(L, 1))
-    {
-        lua_pushnil(L);
-        luax_setregfield(L, LUAX_REGISTRY_NEWINDEX);
+            lua_pushvalue(L, 3);        // obj key val mt setters func obj val
+            lua_call(L, 2, 0);          // obj key mt getters result
+            break;
+        }
     }
 
     return 0;
@@ -586,6 +511,7 @@ template <typename T> void type<T>::register_in(lua_State *L)
 
     // If super class is set then check it's metatable for properties.
     // If it has props then we have to control __index and __newindex.
+    // This allows to correctly handle parent properties and function calls.
     if (usr_super_name())
     {
         luaL_getmetatable(L, usr_super_name());
