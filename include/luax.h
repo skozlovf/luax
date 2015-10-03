@@ -600,7 +600,10 @@ template <typename T> void type<T>::register_in(lua_State *L)
 template <typename T> int type<T>::push(lua_State *L, T *obj, bool useGc)
 {
     if (!obj)
-        return luaL_error(L, "Can't push null [%s] instance.", usr_name());
+    {
+        lua_pushnil(L);
+        return 1;
+    }
 
     luax_getregfield(L, LUAX_UDATA_TABLE);              // udata
     lua_pushfstring(L, "%s_%p", usr_name(), obj);       // udata name
