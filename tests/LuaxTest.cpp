@@ -107,6 +107,10 @@ TEST_F(LuaxTest, simple)
     EXPECT_TRUE(usr_type_mt_called);
 
     EXPECT_SCRIPT("assert(Point)");
+
+    luax::type<Point>::push(L, 0);
+    ASSERT_EQ(1, lua_gettop(L));
+    ASSERT_TRUE(lua_isnil(L, -1));
 }
 //------------------------------------------------------------------------------
 
