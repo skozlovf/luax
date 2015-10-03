@@ -611,10 +611,12 @@ template <typename T> int type<T>::push(lua_State *L, T *obj, bool useGc)
         luaL_getmetatable(L,  usr_name());              // udata ud mt
         lua_setmetatable(L, -2);                        // udata ud
 
-        // Associate val with the userdata.
-        lua_pushlightuserdata(L, wrapper->ptr);         // udata ud ptr
-        lua_pushvalue(L, -2);                           // udata ud ptr ud
-        lua_settable(L, -4); // udata[val] = ud, stack:    udata ud
+        // Link userdata to name for later use. This allows to reuse the same
+        // userdata if obj pushed multiple times.
+        // NOTE: use the same useGc for the multiple pushes.
+        lua_pushfstring(L, "%s_%p", usr_name(), obj);   // udata ud name
+        lua_pushvalue(L, -2);                           // udata ud name ud
+        lua_settable(L, -4); // udata[name] = ud,          udata ud
     }
     lua_remove(L, -2);                                  // ud
 
