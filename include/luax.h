@@ -20,29 +20,6 @@ extern "C" {
 #endif
 
 
-/**
-  * Creates and returns a reference, in the REGISTRY table,
-  * for the object at the top of the stack (and pops the object).
-  */
-#define luax_refreg(L) luaL_ref(L, LUA_REGISTRYINDEX)
-
-/**
- * Releases reference ref from the REGISTRY.
- * The entry is removed from the REGISTRY,
- * so that the referred object can be collected.
- */
-#define luax_unrefreg(L,i) luaL_unref(L, LUA_REGISTRYINDEX, i)
-
-/** Pushes onto the stack referenced REGISTRY value. */
-#define luax_getrefreg(L,i) lua_rawgeti(L, LUA_REGISTRYINDEX, i)
-
-/** Pushes onto the stack the value with name from the REGISTRY. */
-#define luax_getregfield(L,name) lua_getfield(L, LUA_REGISTRYINDEX, name)
-
-/** Pops a value from the stack and sets it as the new value of REGISTRY. */
-#define luax_setregfield(L,name) lua_setfield(L, LUA_REGISTRYINDEX, name)
-
-
 // Helper macros to define a type.
 // TODO: add docs for the macros.
 
@@ -113,7 +90,7 @@ extern "C" {
     } // namespace luax
 
 
-#define LUAX_UDATA_TABLE            "__luax_ud"
+#define LUAX_UDATA "__luax_ud"
 
 namespace luax
 {
@@ -129,7 +106,7 @@ static void init(lua_State * L)
     lua_pushliteral(L, "v");                    // tbl mt key value
     lua_rawset(L, -3);                          // mt.__mode = 'v', tbl mt
     lua_setmetatable(L, -2);                    // tbl.__mt = mt, tbl
-    luax_setregfield(L, LUAX_UDATA_TABLE);      // registry["udata"] = tbl
+    lua_setfield(L, LUA_REGISTRYINDEX, LUAX_UDATA); // registry[key] = tbl
 }
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
@@ -586,7 +563,7 @@ template <typename T> void type<T>::register_in(lua_State *L)
 // NOTE: why we use lua_pushfstring() as a key to associate instance with
 // the userdata. We might use something like:
 //
-//  luax_getregfield(L, LUAX_UDATA_TABLE);              // udata
+//  lua_getfield(L, LUA_REGISTRYINDEX, LUAX_UDATA);     // udata
 //  lua_pushnumber(L, reinterpret_cast<LUA_INTEGER>(obj)); // udata ptr
 //  lua_gettable(L, -2);                                // udata udata[ptr]
 //
@@ -604,7 +581,7 @@ template <typename T> int type<T>::push(lua_State *L, T *obj, bool useGc)
         return 1;
     }
 
-    luax_getregfield(L, LUAX_UDATA_TABLE);              // udata
+    lua_getfield(L, LUA_REGISTRYINDEX, LUAX_UDATA);     // udata
     lua_pushfstring(L, "%s_%p", usr_name(), obj);       // udata name
     lua_gettable(L, -2);                                // udata udata[name]
 
