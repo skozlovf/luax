@@ -114,7 +114,6 @@ extern "C" {
 
 
 #define LUAX_UDATA_TABLE            "__luax_ud"
-#define LUAX_REGISTRY_INDEX         "__luax_idx"
 
 namespace luax
 {
