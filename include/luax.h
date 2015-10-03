@@ -90,6 +90,7 @@ extern "C" {
     } // namespace luax
 
 
+// Registry table name where luax stores userdata, see init() and push().
 #define LUAX_UDATA "__luax_ud"
 
 namespace luax
