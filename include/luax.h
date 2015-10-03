@@ -184,7 +184,6 @@ struct MethodProperty
 //------------------------------------------------------------------------------
 
 
-// TODO: add type properties.
 /**
  * Simple template class to bind c++ type to lua.
  *
@@ -585,14 +584,27 @@ template <typename T> void type<T>::register_in(lua_State *L)
 }
 //------------------------------------------------------------------------------
 
+// NOTE: why we use lua_pushfstring() as a key to associate instance with
+// the userdata. We might use something like:
+//
+//  luax_getregfield(L, LUAX_UDATA_TABLE);              // udata
+//  lua_pushnumber(L, reinterpret_cast<LUA_INTEGER>(obj)); // udata ptr
+//  lua_gettable(L, -2);                                // udata udata[ptr]
+//
+// But if obj is struct or class:
+//
+//  class Obj { Some attr; }
+//
+// then address of the obj and obj->attr may be the same; as a result if we do
+// push(obj); push(obj->attr); second call will extract userdata for obj.
 template <typename T> int type<T>::push(lua_State *L, T *obj, bool useGc)
 {
     if (!obj)
         return luaL_error(L, "Can't push null [%s] instance.", usr_name());
 
     luax_getregfield(L, LUAX_UDATA_TABLE);              // udata
-    lua_pushfstring(L, "%s_%p", usr_name(), obj);       // udata 'name_ptr'
-    lua_gettable(L, -2);                                // udata udata[ptr]
+    lua_pushfstring(L, "%s_%p", usr_name(), obj);       // udata name
+    lua_gettable(L, -2);                                // udata udata[name]
 
     // If no object is associated then we create full userdata
     // and attach type metatable. Also we associate val with full userdata.
