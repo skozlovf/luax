@@ -29,7 +29,7 @@ add_executable(luax-tests ${GMOCK_SRC} ${SRC} ${SRC_H})
 target_link_libraries(luax-tests ${LUA_LIBRARIES})
 
 if(UNIX)
-    target_link_libraries(luax-tests pthread)
+    target_link_libraries(luax-tests pthread ${CMAKE_DL_LIBS})
 endif()
 
 add_test(NAME luax
