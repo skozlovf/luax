@@ -14,8 +14,6 @@ source .travis/platform.sh
 
 LUA_HOME_DIR=$TRAVIS_BUILD_DIR/install/lua
 
-mkdir $HOME/.lua
-
 LUAJIT="no"
 
 if [ "$PLATFORM" == "macosx" ]; then
