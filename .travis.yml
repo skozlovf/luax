@@ -1,4 +1,5 @@
 language: cpp
+sudo: false
 
 compiler:
     - gcc
@@ -9,7 +10,7 @@ env:
     - LUA=luajit     # latest stable version (2.0.4)
     - LUA=luajit2.0  # current head of 2.0 branch
     - LUA=luajit2.1  # current head of 2.1 branch
-    
+
 before_install:
     - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
     - sudo apt-get -qq update
