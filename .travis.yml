@@ -9,12 +9,12 @@ install:
     - cd lua
     - make linux
     - make INSTALL_TOP=$TRAVIS_BUILD_DIR/install/lua install
+    - cd ..
 
 before_script:
     - export LUA_DIR=$TRAVIS_BUILD_DIR/install/lua
     - cmake tests/CMakeLists.txt
     - make
-    - cd ..
 
 script:
     - export PATH=$PATH:$TRAVIS_BUILD_DIR/install/lua
