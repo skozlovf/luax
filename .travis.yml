@@ -14,6 +14,7 @@ install:
 before_script:
     - export LUA_DIR=$TRAVIS_BUILD_DIR/install/lua
     - cd tests
+    - ls $LUA_DIR
     - cmake . && make
 
 script:
