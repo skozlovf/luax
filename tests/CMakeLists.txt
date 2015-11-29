@@ -12,6 +12,7 @@ include_directories(../include)
 # Set LUA_DIR.
 find_package(Lua REQUIRED)
 include_directories(${LUA_INCLUDE_DIR})
+message("---> ${LUA_INCLUDE_DIR}")
 
 set(GMOCK_SRC gmock/gmock-gtest-all.cc gmock/gmock_main.cc)
 include_directories(gmock)
