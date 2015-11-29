@@ -3,9 +3,13 @@ language: cpp
 compiler:
     - gcc
 
-install:
+before_install:
+    - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+    - sudo apt-get -qq update
     - if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-4.8; fi
     - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
+
+install:
     - curl http://www.lua.org/ftp/lua-5.1.5.tar.gz | tar xz
     - mv lua-5.1.5 lua
     - cd lua
