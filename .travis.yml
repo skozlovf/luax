@@ -4,6 +4,8 @@ compiler:
     - gcc
 
 install:
+    - if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-4.8; fi
+    - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
     - curl http://www.lua.org/ftp/lua-5.1.5.tar.gz | tar xz
     - mv lua-5.1.5 lua
     - cd lua
@@ -14,7 +16,6 @@ install:
 before_script:
     - export LUA_DIR=$TRAVIS_BUILD_DIR/install/lua
     - cd tests
-    - ls $LUA_DIR
     - cmake . && make
 
 script:
