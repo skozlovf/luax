@@ -1,5 +1,7 @@
 // Inspired by
 // https://github.com/igoumeninja/Gea/blob/master/bin/data/scripts/my-lua-scripts/LuaAV/include/lua_glue.h
+// http://lua-users.org/wiki/SimplerCppBinding (Luna)
+// http://lua-users.org/wiki/CppBindingWithLunar (Lunar)
 // and similar wrappers.
 
 #ifndef LUAX_H
