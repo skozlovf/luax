@@ -1,0 +1,20 @@
+language: cpp
+
+compiler:
+    - gcc
+
+install:
+    - curl http://www.lua.org/ftp/lua-5.1.5.tar.gz | tar xz
+    - mv lua-5.1.5 lua
+    - cd lua
+    - make linux
+    - make INSTALL_TOP=$TRAVIS_BUILD_DIR/install/lua install
+
+before_script:
+    - export LUA_DIR="$TRAVIS_BUILD_DIR/install/lua"
+    - cmake tests/CMakeLists.txt
+    - make
+
+script:
+    - export PATH=$PATH:$TRAVIS_BUILD_DIR/install/lua
+    - luax-tests
