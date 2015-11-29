@@ -13,9 +13,8 @@ install:
 
 before_script:
     - export LUA_DIR=$TRAVIS_BUILD_DIR/install/lua
-    - cmake tests
-    - make
+    - cd tests
+    - cmake . && make
 
 script:
-    - export PATH=$PATH:$TRAVIS_BUILD_DIR/install/lua
-    - luax-tests
+    - ctest -V
