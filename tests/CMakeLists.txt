@@ -28,6 +28,10 @@ file(GLOB SRC_H ../include/*.h)  # to see *.h in project tree.
 add_executable(luax-tests ${GMOCK_SRC} ${SRC} ${SRC_H})
 target_link_libraries(luax-tests ${LUA_LIBRARIES})
 
+if(UNIX)
+    target_link_libraries(luax-tests pthread)
+endif()
+
 add_test(NAME luax
          COMMAND luax-tests
          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
