@@ -87,6 +87,9 @@ function(set_lua_version_vars)
              lua${CMAKE_MATCH_1}${CMAKE_MATCH_2}
              lua${CMAKE_MATCH_1}.${CMAKE_MATCH_2}
              lua-${CMAKE_MATCH_1}.${CMAKE_MATCH_2}
+             luajit${CMAKE_MATCH_1}${CMAKE_MATCH_2}
+             luajit${CMAKE_MATCH_1}.${CMAKE_MATCH_2}
+             luajit-${CMAKE_MATCH_1}.${CMAKE_MATCH_2}
         )
     endforeach ()
 
@@ -99,7 +102,7 @@ set_lua_version_vars()
 find_path(LUA_INCLUDE_DIR lua.h
   HINTS
     ENV LUA_DIR
-  PATH_SUFFIXES ${_lua_include_subdirs} include/lua include
+  PATH_SUFFIXES ${_lua_include_subdirs} include/lua include/luajit-2.0 include/luajit-2.1 include/luajit include
   PATHS
   ~/Library/Frameworks
   /Library/Frameworks
@@ -107,11 +110,12 @@ find_path(LUA_INCLUDE_DIR lua.h
   /opt/local # DarwinPorts
   /opt/csw # Blastwave
   /opt
+  NO_DEFAULT_PATH
 )
 unset(_lua_include_subdirs)
 
 find_library(LUA_LIBRARY
-  NAMES ${_lua_library_names} lua
+  NAMES ${_lua_library_names} lua luajit
   HINTS
     ENV LUA_DIR
   PATH_SUFFIXES lib
@@ -122,6 +126,7 @@ find_library(LUA_LIBRARY
   /opt/local
   /opt/csw
   /opt
+  NO_DEFAULT_PATH
 )
 unset(_lua_library_names)
 
