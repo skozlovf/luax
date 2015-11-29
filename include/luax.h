@@ -385,7 +385,7 @@ template <typename T> int type<T>::newindex(lua_State *L)
 template <typename T> void type<T>::register_attrs(lua_State *L,
                                                    bool customIndex)
 {
-    for (luaL_reg *m = functions; m->name; ++m)
+    for (luaL_Reg *m = functions; m->name; ++m)
     {
         lua_pushcfunction(L, m->func);
         lua_setfield(L, -2, m->name);
@@ -480,7 +480,7 @@ template <typename T> int type<T>::on_setter(lua_State * L)
 // stack: tbl mt
 template <typename T> void type<T>::register_type_attrs(lua_State *L)
 {
-    for (luaL_reg *m = type_functions; m->name; ++m)
+    for (luaL_Reg *m = type_functions; m->name; ++m)
     {
         lua_pushcfunction(L, m->func);
         lua_setfield(L, -3, m->name);   // set to type table, not it's mt.
