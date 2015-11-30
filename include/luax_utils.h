@@ -253,18 +253,6 @@ template<> inline float get(lua_State *L, int idx)
 }
 //------------------------------------------------------------------------------
 
-template<> inline signed char get(lua_State *L, int idx)
-{
-    return static_cast<signed char>(lua_tointeger(L, idx));
-}
-//------------------------------------------------------------------------------
-
-template<> inline unsigned char get(lua_State *L, int idx)
-{
-    return static_cast<unsigned char>(lua_tointeger(L, idx));
-}
-//------------------------------------------------------------------------------
-
 template<> inline int get(lua_State *L, int idx)
 {
     return static_cast<int>(lua_tonumber(L, idx));
@@ -336,18 +324,6 @@ template<> inline double checkget(lua_State *L, int narg)
 template<> inline float checkget(lua_State *L, int narg)
 {
     return static_cast<float>(luaL_checknumber(L, narg));
-}
-//------------------------------------------------------------------------------
-
-template<> inline signed char checkget(lua_State *L, int narg)
-{
-    return static_cast<signed char>(luaL_checkinteger(L, narg));
-}
-//------------------------------------------------------------------------------
-
-template<> inline unsigned char checkget(lua_State *L, int narg)
-{
-    return static_cast<unsigned char>(luaL_checkinteger(L, narg));
 }
 //------------------------------------------------------------------------------
 

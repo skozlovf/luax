@@ -22,14 +22,6 @@ TEST_F(LuaxUtilsTest, push)
     EXPECT_FLOAT_EQ(1.3f, (float)lua_tonumber(L,  -1));
     lua_pop(L, 1);
 
-    luax::push(L, (signed char)-34);
-    EXPECT_EQ(-34, (signed char)lua_tointeger(L,  -1));
-    lua_pop(L, 1);
-
-    luax::push(L, (unsigned char)34);
-    EXPECT_EQ(34, (unsigned char)lua_tointeger(L,  -1));
-    lua_pop(L, 1);
-
     luax::push(L, (int)-34);
     EXPECT_EQ(-34, (int)lua_tointeger(L,  -1));
     lua_pop(L, 1);
@@ -80,14 +72,6 @@ TEST_F(LuaxUtilsTest, get)
 
     luax::push(L, 1.3f);
     EXPECT_FLOAT_EQ(1.3f, luax::get<float>(L,  -1));
-    lua_pop(L, 1);
-
-    luax::push(L, -34);
-    EXPECT_EQ(-34, luax::get<signed char>(L,  -1));
-    lua_pop(L, 1);
-
-    luax::push(L, 34);
-    EXPECT_EQ(34, luax::get<unsigned char>(L,  -1));
     lua_pop(L, 1);
 
     luax::push(L, -34);
@@ -259,20 +243,6 @@ int f_float(lua_State *L)
 }
 //------------------------------------------------------------------------------
 
-int f_signed_char(lua_State *L)
-{
-    luax::push(L, luax::checkget<signed char>(L, 1));
-    return 1;
-}
-//------------------------------------------------------------------------------
-
-int f_unsigned_char(lua_State *L)
-{
-    luax::push(L, luax::checkget<unsigned char>(L, 1));
-    return 1;
-}
-//------------------------------------------------------------------------------
-
 int f_int(lua_State *L)
 {
     luax::push(L, luax::checkget<int>(L, 1));
@@ -339,8 +309,6 @@ TEST_F(LuaxUtilsTest, checkget)
     luax::set_global(L, "f_void", f_void);
     luax::set_global(L, "f_double", f_double);
     luax::set_global(L, "f_float", f_float);
-    luax::set_global(L, "f_signed_char", f_signed_char);
-    luax::set_global(L, "f_unsigned_char", f_unsigned_char);
     luax::set_global(L, "f_int", f_int);
     luax::set_global(L, "f_unsigned_int", f_unsigned_int);
     luax::set_global(L, "f_long", f_long);
@@ -352,8 +320,6 @@ TEST_F(LuaxUtilsTest, checkget)
     CALL_FUNC("f_void", (void*)L, 12);
     CALL_FUNC("f_double", 12, (void*)L);
     CALL_FUNC("f_float", 12, (void*)L);
-    CALL_FUNC("f_signed_char", 12, (void*)L);
-    CALL_FUNC("f_unsigned_char", 12, (void*)L);
     CALL_FUNC("f_int", 12, (void*)L);
     CALL_FUNC("f_unsigned_int", 12, (void*)L);
     CALL_FUNC("f_long", 12, (void*)L);
