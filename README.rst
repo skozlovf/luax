@@ -17,5 +17,4 @@ Features:
 * Type functions and enums.
 * Simple GC.
 * Requiers C++11 support.
-
-Currently supports lua 5.1 and luajit 2.0/2.1.
+* Works with lua 5.1 - 5.3, luajit 2.0/2.1.
