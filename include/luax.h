@@ -29,8 +29,6 @@
 #ifndef LUAX_H
 #define LUAX_H
 
-#include <cassert>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -478,7 +476,8 @@ template <typename T> int type<T>::on_method(lua_State * L)
     typedef Method<T> Meth;
     Meth *m = static_cast<Meth*>(lua_touserdata(L, lua_upvalueindex(1)));
     T *obj = type<T>::get(L, 1);
-    assert(obj);
+    if (!obj)
+        return luaL_error(L, "Invalid method call - self is not passed");
     lua_remove(L, 1);
     return (obj->*(m->method))(L);
 }
@@ -489,7 +488,8 @@ template <typename T> int type<T>::on_getter(lua_State * L)
     typedef MethodProperty<T> Meth;
     Meth *m = static_cast<Meth*>(lua_touserdata(L, lua_upvalueindex(1)));
     T *obj = type<T>::get(L, 1);
-    assert(obj);
+    if (!obj)
+        return luaL_error(L, "Malformed %s instance", usr_name());
     lua_remove(L, 1);
     return (obj->*(m->getter))(L);
 }
@@ -500,7 +500,8 @@ template <typename T> int type<T>::on_setter(lua_State * L)
     typedef MethodProperty<T> Meth;
     Meth *m = static_cast<Meth*>(lua_touserdata(L, lua_upvalueindex(1)));
     T *obj = type<T>::get(L, 1);
-    assert(obj);
+    if (!obj)
+        return luaL_error(L, "Malformed %s instance", usr_name());
     lua_remove(L, 1);
     return (obj->*(m->setter))(L);
 }
