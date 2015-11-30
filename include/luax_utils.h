@@ -267,25 +267,25 @@ template<> inline unsigned char get(lua_State *L, int idx)
 
 template<> inline int get(lua_State *L, int idx)
 {
-    return static_cast<int>(lua_tointeger(L, idx));
+    return static_cast<int>(lua_tonumber(L, idx));
 }
 //------------------------------------------------------------------------------
 
 template<> inline unsigned int get(lua_State *L, int idx)
 {
-    return static_cast<unsigned int>(lua_tointeger(L, idx));
+    return static_cast<unsigned int>(lua_tonumber(L, idx));
 }
 //------------------------------------------------------------------------------
 
 template<> inline long get(lua_State *L, int idx)
 {
-    return static_cast<long>(lua_tointeger(L, idx));
+    return static_cast<long>(lua_tonumber(L, idx));
 }
 //------------------------------------------------------------------------------
 
 template<> inline unsigned long get(lua_State *L, int idx)
 {
-    return static_cast<unsigned long>(lua_tointeger(L, idx));
+    return static_cast<unsigned long>(lua_tonumber(L, idx));
 }
 //------------------------------------------------------------------------------
 
@@ -353,25 +353,25 @@ template<> inline unsigned char checkget(lua_State *L, int narg)
 
 template<> inline int checkget(lua_State *L, int narg)
 {
-    return static_cast<int>(luaL_checkinteger(L, narg));
+    return static_cast<int>(luaL_checknumber(L, narg));
 }
 //------------------------------------------------------------------------------
 
 template<> inline unsigned int checkget(lua_State *L, int narg)
 {
-    return static_cast<unsigned int>(luaL_checkinteger(L, narg));
+    return static_cast<unsigned int>(luaL_checknumber(L, narg));
 }
 //------------------------------------------------------------------------------
 
 template<> inline long checkget(lua_State *L, int narg)
 {
-    return static_cast<long>(luaL_checkinteger(L, narg));
+    return static_cast<long>(luaL_checknumber(L, narg));
 }
 //------------------------------------------------------------------------------
 
 template<> inline unsigned long checkget(lua_State *L, int narg)
 {
-    return static_cast<unsigned long>(luaL_checkinteger(L, narg));
+    return static_cast<unsigned long>(luaL_checknumber(L, narg));
 }
 //------------------------------------------------------------------------------
 

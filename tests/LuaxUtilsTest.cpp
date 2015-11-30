@@ -133,6 +133,9 @@ TEST_F(LuaxUtilsTest, get_global)
 
     EXPECT_EQ(0, luax::get_global<int>(L, "field"));
     EXPECT_EQ(21, luax::get_global<int>(L, "num"));
+    EXPECT_EQ(21, luax::get_global<unsigned int>(L, "num"));
+    EXPECT_EQ(21, luax::get_global<long>(L, "num"));
+    EXPECT_EQ(21, luax::get_global<unsigned long>(L, "num"));
     EXPECT_DOUBLE_EQ(21.3, luax::get_global<double>(L, "num"));
 }
 //------------------------------------------------------------------------------
