@@ -269,7 +269,36 @@ template <typename T> int type<T>::create(lua_State *L)
 template <typename T> int type<T>::gc(lua_State *L)
 {
     Wrapper *wrapper = static_cast<Wrapper*>(lua_touserdata(L, 1));
-    assert(wrapper);
+
+    // For lua 5.1 __gc is called only once.
+    // For lua >= 5.2 there is a situation where GC gets called multiple times:
+    //
+    //    do
+    //      local b = setmetatable({a = 1}, {__gc = function(self) print('b', self.a); end});
+    //      local c = setmetatable({b = 2}, {__gc = function(self) print('c', self.b); end});
+    //      mtb = getmetatable(b)
+    //      mtc = getmetatable(c)
+    //      setmetatable(mtc, mtb)
+    //    end
+    //    collectgarbage();
+    //
+    // Output:
+    //
+    //    c       2
+    //    b       1
+    //    b       nil
+    //
+    // As you see for 'c' we have two __gc calls.
+
+    // TODO: is it really correct way of inheritance?
+
+    // The reason why it happens in type::register_in()
+    // where we set superclass metatabe on metatable - if we register type
+    // with inheritance.
+
+    // The wrapper gets deleted on first call so we skipp for all future calls.
+    if (!wrapper)
+        return 0;
 
     T *obj = static_cast<T*>(wrapper->ptr);
     if (wrapper->use_gc)
@@ -551,6 +580,7 @@ template <typename T> void type<T>::register_in(lua_State *L)
 
     if (usr_super_name())
     {
+        // This causes multiple _gc calls, see type::gc() for more info.
         luaL_getmetatable(L, usr_super_name());
         lua_setmetatable(L, -2);
     }
