@@ -347,3 +347,44 @@ from the stack:
 instance.
 
 See complete example in ``tests\LuaxPointExample.cpp``.
+
+Bind class using macro
+^^^^^^^^^^^^^^^^^^^^^^
+
+There are few macro to help with type definition:
+
++-------------------------------------+---------------------------------------+
+| Macro                               | Description                           |
++=====================================+=======================================+
+| ``LUAX_TYPE_NAME(cls,name)``        | Define type name.                     |
++-------------------------------------+---------------------------------------+
+| ``LUAX_TYPE_SUPER_NAME(cls,name)``  | Define superclass name.               |
++-------------------------------------+---------------------------------------+
+| ::                                  | Define instance methods.              |
+|                                     |                                       |
+|     LUAX_FUNCTIONS_BEGIN(cls)       |                                       |
+|     LUAX_FUNCTIONS_M_BEGIN(cls)     |                                       |
+|     LUAX_FUNCTION(name, f)          |                                       |
+|     LUAX_FUNCTIONS_END              |                                       |
++-------------------------------------+---------------------------------------+
+| ::                                  | Define instance properties.           |
+|                                     |                                       |
+|     LUAX_PROPERTIES_BEGIN(cls)      |                                       |
+|     LUAX_PROPERTIES_M_BEGIN(cls)    |                                       |
+|     LUAX_PROPERTY(name,get,set)     |                                       |
+|     LUAX_PROPERTIES_END             |                                       |
++-------------------------------------+---------------------------------------+
+| ::                                  | Define enums.                         |
+|                                     |                                       |
+|     LUAX_TYPE_ENUMS_BEGIN(cls)      |                                       |
+|     LUAX_ENUM(name,val)             |                                       |
+|     LUAX_TYPE_ENUMS_END             |                                       |
++-------------------------------------+---------------------------------------+
+| ::                                  | Define type functions.                |
+|                                     |                                       |
+|     LUAX_TYPE_FUNCTIONS_BEGIN(cls)  |                                       |
+|     LUAX_TYPE_FUNCTIONS_END         |                                       |
++-------------------------------------+---------------------------------------+
+
+See example in ``tests\LuaxPointWtihMacroExample.cpp``.
+
