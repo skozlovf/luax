@@ -388,3 +388,96 @@ There are few macro to help with type definition:
 
 See example in ``tests\LuaxPointWtihMacroExample.cpp``.
 
+
+Inheritance
+^^^^^^^^^^^
+
+``luax`` supports single inheritance.
+
+If you want to inherit base class attributes then define superclass name
+and register types starting from base class.
+
+.. code-block:: c++
+
+    class Point {};
+    class PointEx: public Point {};
+
+    LUAX_TYPE_NAME(Point, "Point")
+    ...
+
+    LUAX_TYPE_NAME(PointEx, "PointEx")
+    LUAX_TYPE_SUPER_NAME(PointEx, "Point")
+    ...
+
+    luax::init(L);
+    luax::type<Point>::register_in(L);
+    luax::type<PointEx>::register_in(L);
+
+After that if no attribute (property or method) is found in PointEx then it
+will be searched in Point.
+
+User hooks
+^^^^^^^^^^
+
+``luax`` provides user hooks which gets called on type registration and
+at runtime.
+
+If you want to customize lua type somehow then you may use registration hooks:
+
+* ``usr_instance_mt()``
+* ``usr_type_mt()``
+
+Here are simplified registration steps when you call
+``luax::type<>::register_in()``:
+
+* Create instance metatable.
+* Hook metamethods on the metatable (``__index``, ``__newindex`` etc).
+* **Call** ``usr_instance_mt()``. The metatable will be on top of the stack.
+* Register methods and properties.
+* Create type metatable.
+* Hook metamethods on the metatable.
+* **Call** ``usr_type_mt()``. Type's metatable will be on top of the stack.
+* Register type functions and enums.
+
+--------------------------------------------------------------------------------
+
+Runtime hooks:
+
+* ``usr_gc()``
+* ``usr_getter()``
+* ``usr_setter()``
+
+If you want to perform custom finalization on GC then implement ``usr_gc()``.
+
+Return ``false`` to allow instance deleting by ``luax``, if you
+perform custom delete operations then return ``true``.
+
+Default implementation returns ``false`` to auto delete the object:
+
+.. code-block:: c++
+
+    bool type<T>::usr_gc(lua_State*, T*) { return false; }
+
+
+``usr_getter()`` and ``usr_setter()`` are used as fallback actions if no
+attribute is found.
+
+``__index`` lookup algorithm:
+
+1. Search getter.
+2. Search method in the instance.
+3. Search getter in the superclass.
+4. Search method in the superclass.
+5. Repeat 3, 4 for all superclasses.
+6. **Call** ``usr_getter()``.
+
+``__newindex`` lookup algorithm:
+
+1. Search setter.
+2. Search attribute in the instance.
+3. Search setter in the superclass.
+4. Search attribute in the superclass.
+5. Repeat 3, 4 for all superclasses.
+6. **Call** ``usr_setter()``.
+
+By default ``usr_getter()`` and ``usr_setter()`` returns ``nil``.
