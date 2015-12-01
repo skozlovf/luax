@@ -16,5 +16,5 @@ Features:
 * Single inheritance support.
 * Type functions and enums.
 * Simple GC.
-* Requiers C++11 support.
+* Requires C++11 support.
 * Works with lua 5.1 - 5.3, luajit 2.0/2.1.
