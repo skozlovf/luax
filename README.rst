@@ -481,3 +481,50 @@ attribute is found.
 6. **Call** ``usr_setter()``.
 
 By default ``usr_getter()`` and ``usr_setter()`` returns ``nil``.
+
+
+Utils
+^^^^^
+
+``include/luax_utils.h``:
+
+======================== =======================================================
+``luax::dump::value()``  Return string representation of the value on stack.
+
+``luax::dump::stack()``  Return string representation of the stack.
+
+``StackCleaner``         RAII class to keep lua stack clean. It stores number
+                         of stack items on creating and restores it on deletion.
+
+``luax::push()``         Template function to push value on stack. Specialized
+                         for basic types.
+
+``luax::get()``          Template function to get value from stack.
+
+``luax::checkget()``     Template function that checks function argument type.
+                         Acts like ``luaL_check*``.
+
+``luax::get_global()``   Template function to get value of the global name.
+                         Value itself will be poped from the stack.
+
+``luax::set_global()``   Template function to set v as the new value of
+                         global name.
+
+``luax::get_field()``    Template function, return value ``t[name]``,
+                         where ``t`` is the value at the given valid index.
+                         This function may trigger a metamethod for the
+                         "index" event.
+
+``luax::set_field()``    Template function, equivalent to ``t[name] = v``,
+                         where ``t`` is the value at the given valid index.
+                         This function may trigger a metamethod for the
+                         "newindex" event.
+
+``luax::rawget_field()`` Same as ``luax::get_field()`` but does raw access
+                         (without triggering "index" event).
+
+``luax::rawset_field()`` Same as luax::set_field() but does a raw assignment
+                         (without triggering "newindex" event).
+======================== =======================================================
+
+See ``tests\LuaxUtilsTest.cpp`` for examples.
